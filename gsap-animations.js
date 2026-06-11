@@ -275,7 +275,12 @@ function initCursor() {
     handlers.push({ el, enterTarget, leaveTarget });
   });
 
+  let lastMx = -1;
+  let lastMy = -1;
   const cursorTick = () => {
+    if (mx === lastMx && my === lastMy) return;
+    lastMx = mx;
+    lastMy = my;
     cx += (mx - cx) * 0.12;
     cy += (my - cy) * 0.12;
     gsap.set(cursor, { x: cx, y: cy, force3D: true });
@@ -671,8 +676,22 @@ function initSite() {
   });
 }
 
+/* ── Lazy-build archive when section nears viewport ── */
+function initArchiveObserver() {
+  const films = document.getElementById('films');
+  if (!films) return;
+
+  const observer = new IntersectionObserver((entries, obs) => {
+    if (!entries[0]?.isIntersecting) return;
+    obs.disconnect();
+    loadArchiveData().then(() => buildFilmArchive());
+  }, { rootMargin: '320px' });
+
+  observer.observe(films);
+}
+
 /* ── Bootstrap ── */
 initTheme();
-loadArchiveData().then(() => buildFilmArchive());
+initArchiveObserver();
 
 window.addEventListener('resize', () => ScrollTrigger.refresh());
