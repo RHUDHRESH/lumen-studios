@@ -1,0 +1,16 @@
+{
+  "name": "Lumen Studios",
+  "short_name": "Lumen",
+  "description": "Cinematic heritage films for families whose celebrations become dynasties.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

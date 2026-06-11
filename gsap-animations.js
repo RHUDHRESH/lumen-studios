@@ -40,11 +40,9 @@ function initTheme() {
 function initNavScroll() {
   const nav = document.querySelector('nav');
   if (!nav) return;
-  ScrollTrigger.create({
-    start: 80,
-    end: 99999,
-    onUpdate: (self) => nav.classList.toggle('nav-scrolled', self.progress > 0),
-  });
+  const update = () => nav.classList.toggle('nav-scrolled', window.scrollY > 80);
+  window.addEventListener('scroll', update, { passive: true });
+  update();
 }
 
 /* ── Archive data & lazy build ── */
@@ -118,6 +116,10 @@ function buildFilmArchive() {
   }, { rootMargin: '200px' });
 
   lazyImages.forEach((img) => imgObserver.observe(img));
+
+  initFilmsScroll();
+  initFilmFrameReveal();
+  ScrollTrigger.refresh();
 }
 
 function initArchiveObserver() {
@@ -306,6 +308,30 @@ function initForm() {
     });
   }
 
+  Object.entries(fields).forEach(([key, { el, validate }]) => {
+    el.addEventListener('blur', () => {
+      const row = el.closest('.form-row');
+      const errEl = row.querySelector('.form-error');
+      if (!el.value.trim()) {
+        row.classList.remove('has-error');
+        if (errEl) errEl.textContent = '';
+        return;
+      }
+      if (!validate(el.value)) {
+        const hints = {
+          name: 'Please enter your name',
+          email: 'Please enter a valid email',
+          venue: 'Please enter a venue or city',
+          message: 'Tell us a little more (at least 10 characters)',
+        };
+        showError(key, hints[key]);
+      } else {
+        row.classList.remove('has-error');
+        if (errEl) errEl.textContent = '';
+      }
+    });
+  });
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     clearErrors();
@@ -397,6 +423,51 @@ function initVideoModal() {
   });
 }
 
+let filmsScrollReady = false;
+
+function initFilmsScroll() {
+  if (filmsScrollReady || prefersReduced) return;
+  const isMobile = window.matchMedia('(max-width: 900px)').matches;
+  if (isMobile) return;
+
+  const track = document.getElementById('filmsTrack');
+  if (!track || !track.children.length) return;
+
+  const getScroll = () => track.scrollWidth - window.innerWidth + 160;
+
+  gsap.to(track, {
+    x: () => -getScroll(),
+    ease: 'none',
+    force3D: true,
+    scrollTrigger: {
+      trigger: '#films',
+      start: 'top top',
+      end: () => `+=${Math.max(getScroll(), 100)}`,
+      pin: '#filmsPin',
+      scrub: 0.2,
+      invalidateOnRefresh: true,
+      onUpdate: (self) => {
+        gsap.set('#filmsProgress', { width: `${self.progress * 100}%` });
+      },
+    },
+  });
+
+  filmsScrollReady = true;
+}
+
+function initFilmFrameReveal() {
+  if (prefersReduced) return;
+  gsap.from('.film-frame', {
+    opacity: 0,
+    y: 30,
+    stagger: 0.08,
+    duration: 0.8,
+    ease: 'power2.out',
+    force3D: true,
+    scrollTrigger: { trigger: '#films', start: 'top 80%' },
+  });
+}
+
 /* ── Main init ── */
 function initSite() {
   initCursor();
@@ -404,11 +475,7 @@ function initSite() {
   initForm();
   initVideoModal();
 
-  const filmsSection = document.getElementById('films');
-  const isMobile = window.matchMedia('(max-width: 900px)').matches;
   const isShortViewport = window.matchMedia('(max-height: 600px)').matches;
-
-  if (isMobile && filmsSection) filmsSection.classList.add('is-mobile');
 
   if (prefersReduced) return;
 
@@ -512,41 +579,6 @@ function initSite() {
         scrub: 0.4,
       },
     });
-  });
-
-  if (!isMobile) {
-    const track = document.getElementById('filmsTrack');
-    const getScroll = () => {
-      if (!track || !track.children.length) return 0;
-      return track.scrollWidth - window.innerWidth + 160;
-    };
-
-    gsap.to(track, {
-      x: () => -getScroll(),
-      ease: 'none',
-      force3D: true,
-      scrollTrigger: {
-        trigger: '#films',
-        start: 'top top',
-        end: () => `+=${Math.max(getScroll(), 100)}`,
-        pin: '#filmsPin',
-        scrub: 0.2,
-        invalidateOnRefresh: true,
-        onUpdate: (self) => {
-          gsap.set('#filmsProgress', { width: `${self.progress * 100}%` });
-        },
-      },
-    });
-  }
-
-  gsap.from('.film-frame', {
-    opacity: 0,
-    y: 30,
-    stagger: 0.08,
-    duration: 0.8,
-    ease: 'power2.out',
-    force3D: true,
-    scrollTrigger: { trigger: '#films', start: 'top 80%' },
   });
 
   const quoteChars = [...document.querySelectorAll('#quoteText .split-char')];
@@ -667,7 +699,19 @@ function initSite() {
 }
 
 /* ── Bootstrap ── */
+function initResponsiveFilms() {
+  const filmsSection = document.getElementById('films');
+  if (!filmsSection) return;
+
+  const mm = gsap.matchMedia();
+  mm.add('(max-width: 900px)', () => {
+    filmsSection.classList.add('is-mobile');
+    return () => filmsSection.classList.remove('is-mobile');
+  });
+}
+
 initTheme();
+initResponsiveFilms();
 loadArchiveData().then(() => initArchiveObserver());
 
 window.addEventListener('resize', () => ScrollTrigger.refresh());

@@ -321,6 +321,18 @@ nav.nav-scrolled {
   color: rgba(255,255,255,0.82);
 }
 
+:root[data-theme="light"] .opening-line {
+  color: rgba(255,255,255,0.92);
+  text-shadow: 0 1px 24px rgba(0,0,0,0.45);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .opening-line {
+    color: rgba(255,255,255,0.92);
+    text-shadow: 0 1px 24px rgba(0,0,0,0.45);
+  }
+}
+
 .opening-credit {
   margin-top: 2.5rem;
   font-size: var(--text-xs);
