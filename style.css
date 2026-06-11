@@ -1308,8 +1308,6 @@ footer {
   .cursor, .cursor-label { display: none; }
   .form-submit, .reel-cta, .theme-toggle { cursor: auto; }
 
-  .manifesto-line .word { white-space: normal; }
-
   /* Mobile film carousel */
   .scene-films.is-mobile { min-height: auto; }
   .scene-films.is-mobile .films-pin {
